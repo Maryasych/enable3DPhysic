@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script src='lib/three.min.js'></script>
+<script src='./lib/OrbitControls.js'></script>
+<script src="./lib/GLTFLoader.js"></script>
+<script src="lib/enable3d.ammoPhysics.0.18.0-alpha.0.min.js"></script>
+
+<script>
+    const {
+        AmmoPhysics,
+        PhysicsLoader,
+        ExtendedObject3D,
+        ExtendedMesh
+    } = ENABLE3D
+
+    function MainScene() {
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        var renderer = new THREE.WebGLRenderer({
+            alpha: true
+        });
+        let point
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio)
+        document.body.appendChild(renderer.domElement);
+        camera.position.set(40, 20, 0)
+
+        scene.add(new THREE.AmbientLight())
+        const controls = new THREE.OrbitControls(camera, renderer.domElement)
+
+        const physics = new AmmoPhysics(scene)
+        physics.debug.enable(true)
+
+
+        var pgeometry = new THREE.PlaneGeometry(20, 20);
+        var pmaterial = new THREE.MeshBasicMaterial({
+            color: 0x0000ff,
+            side: THREE.DoubleSide
+        });
+        var plane = new ExtendedMesh(pgeometry, pmaterial);
+        scene.add(plane);
+        plane.rotation.x = Math.PI/3
+        physics.add.existing(plane, {shape: 'hacd'})
+        plane.body.setCollisionFlags(2)
+
+
+        var sgeometry = new THREE.SphereBufferGeometry(1);
+        var smaterial = new THREE.MeshBasicMaterial({
+            color: 0xffff00
+        });
+        var sphere = new THREE.Mesh(sgeometry, smaterial);
+        scene.add(sphere);
+        physics.add.existing(sphere)
+        sphere.body.setCollisionFlags(0)
+
+        var smaterial2 = new THREE.MeshBasicMaterial({
+            color: 0x00ff00
+        });
+        var sphere2 = new THREE.Mesh(sgeometry, smaterial2);
+        sphere2.position.set(7, 20,0)
+        scene.add(sphere2);
+        physics.add.existing(sphere2)
+        sphere2.body.setGravity(0, -2.5, 0)
+        sphere.body.setCollisionFlags(0)
+
+        let loader = new THREE.GLTFLoader()
+        loader.load('lib/scene.gltf', gltf=>{
+            let model = gltf.scene || gltf.scenes[0];
+            model.rotation.x = -Math.PI/2
+            model.position.set(-8, -8, -8)
+            model.traverse(function (node) {
+                let object = new ExtendedObject3D()
+                object.add(node.clone())
+                object.position.copy(model.position)
+                object.rotation.copy(model.rotation)
+                    if (node.name === 'wall'){
+                        object.scale.set(0.1, 0.1, 0.1)
+                    physics.add.existing(object, { shape: 'hacd'})
+                    object.body.setCollisionFlags(2)
+                    scene.add(model)
+                     }
+                });
+        })
+       camera.lookAt(sphere.position)
+
+
+       sphere.body.on.collision((otherObject, event) => {
+            console.log('yellow ball ' + event)
+        })
+
+        sphere2.body.on.collision((otherObject, event) => {
+            console.log('green ball ' + event)
+        })
+
+
+        const clock = new THREE.Clock()
+
+        var animate = function () {
+            physics.update(clock.getDelta() * 1000)
+            physics.updateDebugger()
+            controls.update()
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        };
+
+        animate();
+    }
+    PhysicsLoader('https://maryasych.github.io/enable3DPhysic/lib/', function () {
+        MainScene()
+    })
+</script>
+
+</html>
