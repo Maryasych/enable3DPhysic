@@ -59,15 +59,16 @@
         var smaterial = new THREE.MeshBasicMaterial({
             color: 0xffff00
         });
-        var sphere = new THREE.Mesh(sgeometry, smaterial);
+        var sphere = new ExtendedMesh(sgeometry, smaterial);
         scene.add(sphere);
         physics.add.existing(sphere)
         sphere.body.setCollisionFlags(0)
 
+        var sgeometry1 = new THREE.SphereBufferGeometry(1);
         var smaterial2 = new THREE.MeshBasicMaterial({
             color: 0x00ff00
         });
-        var sphere2 = new THREE.Mesh(sgeometry, smaterial2);
+        var sphere2 = new ExtendedMesh(sgeometry1, smaterial2);
         sphere2.position.set(7, 20,0)
         scene.add(sphere2);
         physics.add.existing(sphere2)
